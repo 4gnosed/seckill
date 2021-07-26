@@ -11,8 +11,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SpringBootApplication
 @MapperScan("cn.gnosed.shopping.mapper")
-public class ShoppingApplication {
+public class SecKillApplication {
     public static void main(String[] args) {
-        SpringApplication.run(ShoppingApplication.class, args);
+        SpringApplication.run(SecKillApplication.class, args);
     }
 }
