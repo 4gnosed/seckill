@@ -10,4 +10,5 @@ public class Constant {
     public static final String ID = "id";
     public static final String STOCK = "stock";
     public static final String LOCK = "lock";
+    public static final String GOOD_ID = "good_id";
 }

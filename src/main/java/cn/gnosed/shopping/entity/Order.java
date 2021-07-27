@@ -23,9 +23,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-//@TableName("t_order")
-//@TableName("t_order_redis")
-@TableName("t_order_redis_lock")
+@TableName("t_order")
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -43,16 +41,16 @@ public class Order implements Serializable {
     private Integer goodId;
 
     /**
-     * 商品数量
+     * 用户ID
      */
-    @TableField("amount")
-    private Integer amount;
+    @TableField("user_id")
+    private Integer userId;
 
     /**
-     * 商品库存
+     * 购买数量
      */
-    @TableField("stock_amount")
-    private Integer stockAmount;
+    @TableField("quantity")
+    private Integer quantity;
 
     /**
      * 下单时间
@@ -66,4 +64,6 @@ public class Order implements Serializable {
      */
     @TableField("status")
     private Boolean status;
+
+
 }

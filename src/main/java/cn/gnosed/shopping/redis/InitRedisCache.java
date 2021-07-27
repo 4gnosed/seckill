@@ -40,7 +40,7 @@ public class InitRedisCache implements CommandLineRunner {
         logger.info("初始化缓存：商品记录" + goodList);
         //加载至redis，key为商品ID，value为商品记录对象
         for (Good good : goodList) {
-            Boolean putFlag = redisCache.set(Integer.toString(good.getId()), good,
+            Boolean putFlag = redisCache.set(good.getGoodId(), good,
                     DateTimeUtil.getRandomInt(RedisCache.LEAST_CACHE_TIME, RedisCache.MOST_CACHE_TIME), TimeUnit.MINUTES);
             if (!putFlag) {
                 return;

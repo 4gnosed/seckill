@@ -13,9 +13,9 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IOrderService extends IService<Order> {
 
-    void insert(Integer goodId, Integer quantity, Integer stock, boolean isPlace);
+    void insert(Integer goodId, Integer quantity, Integer userId, boolean isPlace);
 
-    void successPlace(Integer goodId, Integer quantity, Integer stock);
+    void successPlace(Integer goodId, Integer quantity,Integer userId);
 
-    void failPlace(Integer goodId, Integer quantity, Integer stock);
+    void failPlace(Integer goodId, Integer quantity, Integer userId);
 }

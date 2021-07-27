@@ -4,9 +4,9 @@ spring:
     # 使用druid数据源
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/shopping?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
-    username: root
-    password: "123456"
+    url: jdbc:mysql://cess-localhost:3336/seckill?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: seckill
+    password: seckill
     filters: stat
     maxActive: 20
     initialSize: 1
@@ -31,13 +31,13 @@ spring:
     # redis 数据库索引（默认为0）
     database: 3
     # redis 服务地址
-    host: 127.0.0.1
+    host: 120.77.32.19
     # redis 连接端口
-    port: 6379
+    port: 6789
     # redis 服务器链接密码 （默认为空）
-    password:
+    password: 1234
     # 连接超时时间 （毫秒）
-    timeout: 5000
+    timeout: 2000
     # 配置 redis 连接池
     jedis:
       pool:

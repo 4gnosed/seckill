@@ -28,20 +28,26 @@ public class Good implements Serializable {
     /**
      * 商品ID
      */
-    @TableId(value = "id", type = IdType.AUTO)
-    private Integer id;
+    @TableId(value = "good_id")
+    private String goodId;
 
     /**
      * 商品名称
      */
-    @TableField("name")
-    private String name;
+    @TableField("good_name")
+    private String goodName;
 
     /**
-     * 库存
+     * 当前库存
      */
     @TableField("stock")
     private Integer stock;
+
+    /**
+     * 初始库存
+     */
+    @TableField("old_stock")
+    private Integer oldStock;
 
 
 }

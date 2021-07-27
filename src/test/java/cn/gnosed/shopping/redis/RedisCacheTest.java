@@ -56,8 +56,8 @@ public class RedisCacheTest extends AbstractClass {
     public void testPutObject() {
         String key = "test_object_good_2";
         Good good = new Good();
-        good.setId(1234);
-        good.setName("商品");
+        good.setGoodId("1234");
+        good.setGoodName("商品");
         good.setStock(1000);
 
         logger.info("存储对象开始 key={} value={}", key, good);

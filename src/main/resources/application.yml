@@ -1,6 +1,6 @@
 #app
 server:
-  port: 8443
+  port: 8446
   tomcat:
     uri-encoding: utf-8
     # 最大线程数
@@ -17,7 +17,7 @@ server:
 
 spring:
   application:
-    name: shopping
+    name: seckill
   profiles:
     active: dev
 
@@ -53,5 +53,5 @@ mybatis-plus:
     cache-enabled: false
 
 logback:
-  appName: shopping
+  appName: seckill
   fileType: log

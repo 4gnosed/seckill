@@ -5,9 +5,12 @@ import cn.gnosed.shopping.entity.Good;
 import cn.gnosed.shopping.mapper.GoodMapper;
 import cn.gnosed.shopping.redis.RedisCache;
 import cn.gnosed.shopping.redis.RedisDistributedLock;
+import cn.gnosed.shopping.result.Result;
+import cn.gnosed.shopping.result.ResultFactory;
 import cn.gnosed.shopping.service.IGoodService;
 import cn.gnosed.shopping.service.IOrderService;
 import cn.gnosed.shopping.util.DateTimeUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -44,11 +47,12 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
      *
      * @param goodId
      * @param quantity
+     * @param userId
      * @return
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean buy(Integer goodId, Integer quantity) {
+    public boolean buy(Integer goodId, Integer quantity, Integer userId) {
         Good good = null;
         String goodKey = Integer.toString(goodId);
 
@@ -73,7 +77,7 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
             if (exists) {
                 // 缓存中有该商品记录
                 good = redisCache.get(goodKey, Good.class);
-                logger.info("获取商品缓存成功，" + good.toString());
+                logger.info("获取商品缓存成功:{}", JSON.toJSONString(good));
             } else {
                 // 缓存不存在该商品则请求数据库，并添加到缓存中
                 QueryWrapper<Good> q = new QueryWrapper<>();
@@ -83,7 +87,7 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
                 // 缓存穿透：数据库中无记录，之后该key的每次请求都会转发到数据库
                 // 解决：缓存该商品value为null并且设置过期时间
                 logger.info("请求数据库成功");
-                logger.info("商品：" + good.toString());
+                logger.info("商品:{}", JSON.toJSONString(good));
 
                 // 缓存雪崩：缓存采用相同的过期时间，导致多个key在某一个时间失效，全部请求转发到数据库
                 // 解决：过期时间设置为随机值
@@ -115,23 +119,34 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
                 update(u);
                 logger.info("商品记录持久化成功");
 
-                iOrderService.successPlace(goodId, quantity, newStock);
+                iOrderService.successPlace(goodId, quantity, userId);
                 logger.info("订单记录持久化成功");
 
                 return true;
             } else {
                 //否则下单失败
-                iOrderService.failPlace(goodId, quantity, stock);
+                iOrderService.failPlace(goodId, quantity, userId);
                 logger.warn("库存不足，下单失败");
                 return false;
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return false;
-        }finally {
+        } finally {
             redisDistributedLock.release(unLockIdentify);
         }
 
     }
+
+    @Override
+    public Good getGood(String goodId) {
+        QueryWrapper<Good> q = new QueryWrapper<>();
+        q.eq(Constant.ID, goodId);
+        Good good = getOne(q);
+        logger.info("查询商品:{}", JSON.toJSONString(good));
+        return good;
+    }
+
+
 }
