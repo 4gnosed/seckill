@@ -28,7 +28,7 @@ public class GoodController extends AbstractClass {
     IGoodService iGoodService;
 
     @GetMapping("/buy")
-    public Result buyGood(@RequestParam("goodId") Integer goodId,
+    public Result buyGood(@RequestParam("goodId") String goodId,
                           @RequestParam("quantity") Integer quantity,
                           @RequestParam("userId") Integer userId) {
         if (iGoodService.buy(goodId, quantity, userId)) {

@@ -38,7 +38,7 @@ public class Order implements Serializable {
      * 商品ID
      */
     @TableField("good_id")
-    private Integer goodId;
+    private String goodId;
 
     /**
      * 用户ID

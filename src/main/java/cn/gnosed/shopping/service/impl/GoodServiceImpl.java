@@ -52,9 +52,9 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean buy(Integer goodId, Integer quantity, Integer userId) {
+    public boolean buy(String goodId, Integer quantity, Integer userId) {
         Good good = null;
-        String goodKey = Integer.toString(goodId);
+        String goodKey = goodId;
 
         // 缓存击穿：某一个key在高并发量前正好失效，则所有请求将会转到数据库
         // 解决：分布式锁
@@ -81,7 +81,7 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
             } else {
                 // 缓存不存在该商品则请求数据库，并添加到缓存中
                 QueryWrapper<Good> q = new QueryWrapper<>();
-                q.eq(Constant.ID, goodId).last("limit 1");
+                q.eq(Constant.GOOD_ID, goodId).last("limit 1");
                 good = getOne(q);
 
                 // 缓存穿透：数据库中无记录，之后该key的每次请求都会转发到数据库
@@ -115,7 +115,7 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
 
                 // 并持久化库存
                 UpdateWrapper<Good> u = new UpdateWrapper<>();
-                u.eq(Constant.ID, goodId).set(Constant.STOCK, newStock);
+                u.eq(Constant.GOOD_ID, goodId).set(Constant.STOCK, newStock);
                 update(u);
                 logger.info("商品记录持久化成功");
 
@@ -142,7 +142,7 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
     @Override
     public Good getGood(String goodId) {
         QueryWrapper<Good> q = new QueryWrapper<>();
-        q.eq(Constant.ID, goodId);
+        q.eq(Constant.GOOD_ID, goodId);
         Good good = getOne(q);
         logger.info("查询商品:{}", JSON.toJSONString(good));
         return good;

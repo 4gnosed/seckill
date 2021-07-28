@@ -23,7 +23,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private static Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     @Override
-    public void insert(Integer goodId, Integer quantity, Integer userId, boolean isPlace) {
+    public void insert(String goodId, Integer quantity, Integer userId, boolean isPlace) {
         Order order = new Order();
         order.setGoodId(goodId);
         order.setQuantity(quantity);
@@ -35,12 +35,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
-    public void successPlace(Integer goodId, Integer quantity, Integer userId) {
+    public void successPlace(String goodId, Integer quantity, Integer userId) {
         insert(goodId, quantity, userId, true);
     }
 
     @Override
-    public void failPlace(Integer goodId, Integer quantity, Integer userId) {
+    public void failPlace(String goodId, Integer quantity, Integer userId) {
         insert(goodId, quantity, userId,false);
     }
 }

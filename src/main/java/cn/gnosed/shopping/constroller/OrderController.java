@@ -43,18 +43,29 @@ public class OrderController extends AbstractClass {
                              @RequestParam(defaultValue = "10") Integer size,
                              @RequestParam String goodId) {
         QueryWrapper<Order> q = new QueryWrapper<>();
-        q.eq(Constant.GOOD_ID, goodId);
+        q.eq(Constant.GOOD_ID, goodId).orderByDesc(Constant.CREATE_TIME);
         Page<Order> orderPage = iOrderService.page(new Page<>(page, size), q);
         JSONObject data = new JSONObject();
         data.put("total", orderPage.getTotal());
         data.put("dataList", orderPage.getRecords());
 
         Good good = iGoodService.getGood(goodId);
-        DecimalFormat df = new DecimalFormat("0.00");
-        String stockPercentage = df.format((float) good.getOldStock() / good.getStock());
-        data.put("stock", good.getStock());
-        data.put("stockPercentage", stockPercentage);
+        if (good != null) {
+            DecimalFormat df = new DecimalFormat("0.00");
+            String stockPercentage = df.format((float) good.getStock() / good.getOldStock());
+            data.put("stock", good.getStock());
+            data.put("stockPercentage", stockPercentage);
+        } else {
+            data.put("stock", 0);
+            data.put("stockPercentage", 0);
+        }
 
         return ResultFactory.buildSuccessResult(data);
+    }
+    
+    public static void main(String[] args) {
+        DecimalFormat df = new DecimalFormat("0.00");
+        String stockPercentage = df.format((float) 88 / 100);  
+        System.out.println(stockPercentage);
     }
 }

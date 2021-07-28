@@ -14,7 +14,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IGoodService extends IService<Good> {
 
-    boolean buy(Integer goodId, Integer quantity, Integer userId);
+    boolean buy(String goodId, Integer quantity, Integer userId);
 
     Good getGood(String goodId);
 }
