@@ -14,6 +14,9 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.common.base.Charsets;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,13 +38,19 @@ import java.util.concurrent.TimeUnit;
 public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IGoodService {
     private static Logger logger = LoggerFactory.getLogger(GoodServiceImpl.class);
 
+    //布隆过滤器，记录不存在商品的key
+    private static final int DEFAULT_INSERTIONS = 1000;
+    private static BloomFilter<String> bf = BloomFilter.create(Funnels.stringFunnel(Charsets.UTF_8), DEFAULT_INSERTIONS);
+
     @Autowired
     IOrderService iOrderService;
     @Autowired
     RedisCache redisCache;
 
     /**
-     * 获取商品记录（缓存或者数据库）——> 商品库存更新（缓存与数据库） ——> 订单生存（数据库）
+     * 1.获取商品记录（缓存或者数据库）
+     * 2.商品库存更新（缓存与数据库）
+     * 3.订单生存（数据库）
      * 从redis缓存层面上，必须保证这三个步骤的缓存一致性
      * 从业务层面上，必须保证后两个步骤的数据库事物原子性
      *
@@ -56,14 +65,15 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
         Good good = null;
         String goodKey = goodId;
 
-        // 缓存击穿：某一个key在高并发量前正好失效，则所有请求将会转到数据库
-        // 解决：分布式锁
+
         RedisDistributedLock redisDistributedLock = null;
         String unLockIdentify = null;
         String lockKey = Constant.LOCK + goodKey;
         try {
             redisDistributedLock = new RedisDistributedLock(redisCache, lockKey);
 
+            // 缓存击穿：某一个key在高并发量前正好失效，则所有请求将会转到数据库
+            // 解决：分布式锁（redis互斥锁）
             // 获取锁，返回该redis客户端获取该锁的唯一标示，以便后续该客户端释放锁
             unLockIdentify = redisDistributedLock.acquire();
 
@@ -79,19 +89,29 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
                 good = redisCache.get(goodKey, Good.class);
                 logger.info("获取商品缓存成功:{}", JSON.toJSONString(good));
             } else {
-                // 缓存不存在该商品则请求数据库，并添加到缓存中
+                // 缓存穿透：数据库中无记录，之后该key的每次请求都会转发到数据库
+                // 解决：1.缓存该商品value为默认值并且设置过期时间，
+                // 2.布隆过滤器，有一定误判率，即返回key存在实际上不存在，查一次数据库可以忍受
+                //查询布隆过滤器，key存在则直接返回**********
+                if (bf.mightContain(goodKey)) {
+                    iOrderService.failPlace(goodId, quantity, userId);
+                    logger.warn("商品不存在");
+                    return false;
+                }
+
+                // 查询数据库
                 QueryWrapper<Good> q = new QueryWrapper<>();
                 q.eq(Constant.GOOD_ID, goodId).last("limit 1");
                 good = getOne(q);
+                logger.info("请求数据库查询商品:{}", JSON.toJSONString(good));
 
-                // 缓存穿透：数据库中无记录，之后该key的每次请求都会转发到数据库
-                // 解决：缓存该商品value为null并且设置过期时间
-                logger.info("请求数据库成功");
-                logger.info("商品:{}", JSON.toJSONString(good));
+                //**********商品为空，则插入key到布隆过滤器
+                if (good == null) {
+                    bf.put(goodKey);
+                }
 
                 // 缓存雪崩：缓存采用相同的过期时间，导致多个key在某一个时间失效，全部请求转发到数据库
                 // 解决：过期时间设置为随机值
-
                 Boolean putFlag = redisCache.set(goodKey, good,
                         DateTimeUtil.getRandomInt(RedisCache.LEAST_CACHE_TIME, RedisCache.MOST_CACHE_TIME), TimeUnit.MINUTES);
 
@@ -126,7 +146,7 @@ public class GoodServiceImpl extends ServiceImpl<GoodMapper, Good> implements IG
             } else {
                 //否则下单失败
                 iOrderService.failPlace(goodId, quantity, userId);
-                logger.warn("库存不足，下单失败");
+                logger.warn("库存不足");
                 return false;
             }
         } catch (Exception e) {
