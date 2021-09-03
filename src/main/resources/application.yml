@@ -20,7 +20,23 @@ spring:
     name: seckill
   profiles:
     active: dev
-
+  #注册到admin服务端
+  boot:
+    admin:
+      client:
+        url: http://localhost:8886/admin
+#打开actuator监控
+management:
+  #监控端口
+  server:
+    port: 8888
+  endpoints:
+    web:
+      #定制跟路径
+      base-path: /actuator
+      #开放所有节点，默认只开启了health info节点，也可以设置部分启动, 如：env,beans。默认是health, info
+      exposure:
+        include: "*"
 #mybatis
 mybatis-plus:
   # xml
